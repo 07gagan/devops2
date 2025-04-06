@@ -1,95 +1,39 @@
-let currentQuestion = 0;
-let score = 0;
-let timer;
-let timeLeft = 15;
+const input = document.getElementById('task-input');
+const addBtn = document.getElementById('add-btn');
+const taskList = document.getElementById('task-list');
 
-const questionEl = document.getElementById("question");
-const optionsEl = document.getElementById("options");
-const nextBtn = document.getElementById("next-btn");
-const scoreBox = document.getElementById("score-container");
-const scoreText = document.getElementById("score");
-const highScoreEl = document.getElementById("high-score");
-const timeEl = document.getElementById("time");
-
-function startGame() {
-  shuffle(questions);
-  showQuestion();
-}
-
-function showQuestion() {
-  resetState();
-  startTimer();
-  const q = questions[currentQuestion];
-  questionEl.textContent = q.question;
-
-  let shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
-  shuffledOptions.forEach(option => {
-    const li = document.createElement("li");
-    li.textContent = option;
-    li.onclick = () => selectOption(option);
-    optionsEl.appendChild(li);
-  });
-}
-
-function resetState() {
-  clearInterval(timer);
-  optionsEl.innerHTML = "";
-  nextBtn.style.display = "none";
-  timeLeft = 15;
-  timeEl.textContent = timeLeft;
-}
-
-function selectOption(selected) {
-  const correct = questions[currentQuestion].answer;
-  if (selected === correct) score++;
-
-  clearInterval(timer);
-  currentQuestion++;
-  nextBtn.style.display = "inline-block";
-}
-
-nextBtn.onclick = () => {
-  if (currentQuestion < questions.length) {
-    showQuestion();
-  } else {
-    endGame();
+addBtn.addEventListener('click', addTask);
+input.addEventListener('keypress', function (e) {
+  if (e.key === 'Enter') {
+    addTask();
   }
-};
+});
 
-function endGame() {
-  document.getElementById("question-box").style.display = "none";
-  scoreBox.classList.remove("hidden");
-  scoreText.textContent = `${score} / ${questions.length}`;
+function addTask() {
+  const taskText = input.value.trim();
+  if (taskText === '') return;
 
-  let high = localStorage.getItem("highScore") || 0;
-  if (score > high) {
-    localStorage.setItem("highScore", score);
-    high = score;
-  }
-  highScoreEl.textContent = high;
+  const li = document.createElement('li');
+  li.className = 'task';
+  li.innerHTML = `
+    <span>${taskText}</span>
+    <div>
+      <button onclick="toggleDone(this)">✅</button>
+      <button onclick="deleteTask(this)">❌</button>
+    </div>
+  `;
+
+  taskList.appendChild(li);
+  input.value = '';
 }
 
-function startTimer() {
-  timer = setInterval(() => {
-    timeLeft--;
-    timeEl.textContent = timeLeft;
-    if (timeLeft <= 0) {
-      clearInterval(timer);
-      currentQuestion++;
-      if (currentQuestion < questions.length) {
-        showQuestion();
-      } else {
-        endGame();
-      }
-    }
-  }, 1000);
+function deleteTask(btn) {
+  const task = btn.closest('li');
+  task.classList.add('fall');
+  task.addEventListener('transitionend', () => task.remove());
 }
 
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
+function toggleDone(btn) {
+  const task = btn.closest('li');
+  task.classList.toggle('done');
 }
-
-startGame();
